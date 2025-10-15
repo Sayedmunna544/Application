@@ -5,6 +5,7 @@ plugins {
 
     id("org.jetbrains.kotlin.kapt")
     id("com.google.dagger.hilt.android")
+    alias(libs.plugins.google.gms.google.services)
 }
 
 android {
@@ -52,6 +53,8 @@ dependencies {
 
     // --- Hilt (Dependency Injection) ---
     implementation("com.google.dagger:hilt-android:2.56.2")
+    implementation(libs.firebase.auth)
+    implementation(libs.firebase.firestore)
     kapt("com.google.dagger:hilt-android-compiler:2.56.2")
 
     // Hilt with Jetpack (optional, for integration with ViewModel)

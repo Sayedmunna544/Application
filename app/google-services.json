@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "664772067765",
+    "project_id": "teesside-431609",
+    "storage_bucket": "teesside-431609.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:664772067765:android:089fdbf5c08abfa920d9fc",
+        "android_client_info": {
+          "package_name": "uk.ac.tees.mad.petcaretracker"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAMiSkh0M2A3KKuJoMUMio0_2Qhks2gnfE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
