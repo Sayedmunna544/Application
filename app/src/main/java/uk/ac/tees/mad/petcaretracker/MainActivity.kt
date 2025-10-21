@@ -4,9 +4,15 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Scaffold
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
 import dagger.hilt.android.AndroidEntryPoint
 import uk.ac.tees.mad.petcaretracker.Screen.SplashScreen
 import uk.ac.tees.mad.petcaretracker.ui.theme.PetCareTrackerTheme
@@ -19,9 +25,29 @@ class MainActivity : ComponentActivity() {
         setContent {
             PetCareTrackerTheme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    SplashScreen(innerPadding)
+                    AppNavigation(innerPadding)
                 }
             }
+        }
+    }
+}
+
+sealed class PetNavigation(val route: String) {
+    object SplashScreen : PetNavigation("splash_screen")
+    object LoginScreen : PetNavigation("login_screen")
+    object RegisterScreen : PetNavigation("register_screen")
+    object HomeScreen : PetNavigation("home_screen")
+
+}
+
+@Composable
+fun AppNavigation(innerPadding: PaddingValues) {
+    val viewModel : MainViewModel = hiltViewModel();
+    val navController = rememberNavController()
+
+    NavHost(navController = navController, startDestination = PetNavigation.SplashScreen.route){
+        composable(PetNavigation.SplashScreen.route){
+            SplashScreen(navController, innerPadding)
         }
     }
 }
