@@ -14,6 +14,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import dagger.hilt.android.AndroidEntryPoint
+import uk.ac.tees.mad.petcaretracker.Screen.LoginScreen
 import uk.ac.tees.mad.petcaretracker.Screen.RegisterScreen
 import uk.ac.tees.mad.petcaretracker.Screen.SplashScreen
 import uk.ac.tees.mad.petcaretracker.ui.theme.PetCareTrackerTheme
@@ -46,12 +47,15 @@ fun AppNavigation(innerPadding: PaddingValues) {
     val viewModel : MainViewModel = hiltViewModel();
     val navController = rememberNavController()
 
-    NavHost(navController = navController, startDestination = PetNavigation.RegisterScreen.route){
+    NavHost(navController = navController, startDestination = PetNavigation.LoginScreen.route){
         composable(PetNavigation.SplashScreen.route){
             SplashScreen(navController, innerPadding)
         }
         composable(PetNavigation.RegisterScreen.route){
             RegisterScreen(navController, viewModel)
+        }
+        composable(PetNavigation.LoginScreen.route){
+            LoginScreen(navController, viewModel)
         }
     }
 }
