@@ -126,11 +126,13 @@ fun RegisterScreen(navController: NavController, viewModel: MainViewModel) {
             )
 
             Spacer(modifier = Modifier.padding(top = 16.dp))
-            Button(onClick = {}, modifier = Modifier.fillMaxWidth(), enabled = !loading) {
+            Button(onClick = {
+                viewModel.signUp(firstName, lastName, email, password, context)
+            }, modifier = Modifier.fillMaxWidth(), enabled = !loading) {
                 if (loading) {
                     Text("Loading...")
                 } else {
-                    Text("Log in", fontSize = 16.sp)
+                    Text("Sign up", fontSize = 16.sp)
                 }
             }
             Spacer(modifier = Modifier.padding(top = 16.dp))
