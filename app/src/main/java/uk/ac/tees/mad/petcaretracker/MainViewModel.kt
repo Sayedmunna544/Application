@@ -17,6 +17,14 @@ class MainViewModel @Inject constructor(
     private val firestore: FirebaseFirestore
 ) : ViewModel() {
 
+    val _isLoggedIn = mutableStateOf(false)
+
+    init {
+        if (auth.currentUser != null) {
+            _isLoggedIn.value = true
+        }
+    }
+
     val loading = mutableStateOf(false)
 
     fun signUp(
@@ -38,10 +46,34 @@ class MainViewModel @Inject constructor(
                                 "email" to email,
                                 "password" to password
                             )
-                        )
+                        ).addOnSuccessListener {
+                            loading.value = false
+                            Toast.makeText(context, "Sign up successful", Toast.LENGTH_SHORT).show()
+                            _isLoggedIn.value = true
+                        }.addOnFailureListener {
+                            loading.value = false
+                            Toast.makeText(context, it.localizedMessage, Toast.LENGTH_SHORT).show()
+                        }
                     }
+                }
+                .addOnFailureListener {
                     loading.value = false
-                    Toast.makeText(context, "Sign up successful", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, it.localizedMessage, Toast.LENGTH_SHORT).show()
+                }
+        }
+    }
+
+    fun logIn(email: String, password: String, context: Context) {
+        viewModelScope.launch {
+            loading.value = true
+
+            auth.signInWithEmailAndPassword(email, password)
+                .addOnCompleteListener {
+                    if (it.isSuccessful) {
+                        loading.value = false
+                        _isLoggedIn.value = true
+                        Toast.makeText(context, "Log in successful", Toast.LENGTH_SHORT).show()
+                    }
                 }
                 .addOnFailureListener {
                     loading.value = false

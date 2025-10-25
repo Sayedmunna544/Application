@@ -1,5 +1,6 @@
 package uk.ac.tees.mad.petcaretracker.Screen
 
+import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -127,6 +128,10 @@ fun RegisterScreen(navController: NavController, viewModel: MainViewModel) {
 
             Spacer(modifier = Modifier.padding(top = 16.dp))
             Button(onClick = {
+                if (firstName.isEmpty() || lastName.isEmpty() || email.isEmpty() || password.isEmpty()) {
+                    Toast.makeText(context, "All fields are required", Toast.LENGTH_SHORT).show()
+                    return@Button
+                }
                 viewModel.signUp(firstName, lastName, email, password, context)
             }, modifier = Modifier.fillMaxWidth(), enabled = !loading) {
                 if (loading) {

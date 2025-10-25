@@ -1,5 +1,6 @@
 package uk.ac.tees.mad.petcaretracker.Screen
 
+import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -101,7 +102,13 @@ fun LoginScreen(navController: NavController, viewModel: MainViewModel) {
             )
 
             Spacer(modifier = Modifier.padding(top = 16.dp))
-            Button(onClick = {}, modifier = Modifier.fillMaxWidth(), enabled = !loading) {
+            Button(onClick = {
+                if (email.isEmpty() || password.isEmpty()) {
+                    Toast.makeText(context, "Email and password cannot be empty", Toast.LENGTH_SHORT).show()
+                    return@Button
+                }
+                viewModel.logIn(email, password, context)
+            }, modifier = Modifier.fillMaxWidth(), enabled = !loading) {
                 if (loading) {
                     Text("Loading...")
                 } else {
