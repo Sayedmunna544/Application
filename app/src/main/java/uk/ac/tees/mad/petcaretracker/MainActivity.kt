@@ -14,6 +14,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import dagger.hilt.android.AndroidEntryPoint
+import uk.ac.tees.mad.petcaretracker.Screen.HomeScreen
 import uk.ac.tees.mad.petcaretracker.Screen.LoginScreen
 import uk.ac.tees.mad.petcaretracker.Screen.RegisterScreen
 import uk.ac.tees.mad.petcaretracker.Screen.SplashScreen
@@ -56,6 +57,9 @@ fun AppNavigation(innerPadding: PaddingValues) {
         }
         composable(PetNavigation.LoginScreen.route){
             LoginScreen(navController, viewModel)
+        }
+        composable(PetNavigation.HomeScreen.route){
+            HomeScreen(navController, viewModel)
         }
     }
 }

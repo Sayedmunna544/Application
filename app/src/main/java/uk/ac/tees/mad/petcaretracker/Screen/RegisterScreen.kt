@@ -18,6 +18,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -41,6 +42,7 @@ import uk.ac.tees.mad.petcaretracker.R
 @Composable
 fun RegisterScreen(navController: NavController, viewModel: MainViewModel) {
     val context = LocalContext.current
+    val loggedIn = viewModel._isLoggedIn.value
     var firstName by remember {
         mutableStateOf("")
     }
@@ -57,6 +59,13 @@ fun RegisterScreen(navController: NavController, viewModel: MainViewModel) {
         mutableStateOf(false)
     }
     val loading = viewModel.loading.value;
+    LaunchedEffect(loggedIn) {
+        if (loggedIn) {
+            navController.navigate(PetNavigation.HomeScreen.route) {
+                popUpTo(0)
+            }
+        }
+    }
     Box(
         modifier = Modifier
             .fillMaxSize()
