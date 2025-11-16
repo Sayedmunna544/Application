@@ -2,15 +2,14 @@ package uk.ac.tees.mad.petcaretracker.Screen
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
@@ -38,11 +37,9 @@ fun HomeScreen(navController: NavHostController, viewModel: MainViewModel) {
         floatingActionButton = {
             FloatingActionButton(onClick = {
 
-                navController.navigate(PetNavigation.Create.route) {
-                    popUpTo(0)
-                }
+                navController.navigate(PetNavigation.CreateScreen.route)
             }) {
-                Icon(Icons.Default.Logout, contentDescription = "Logout")
+                Icon(Icons.Default.Add, contentDescription = "Logout")
             }
         }) { iv ->
         Image(

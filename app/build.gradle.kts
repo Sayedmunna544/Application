@@ -52,7 +52,8 @@ dependencies {
     implementation("androidx.compose.material3:material3-window-size-class:1.3.2")
 
     // Material Icons (extended)
-    implementation("androidx.compose.material:material-icons-extended:1.7.7")
+    implementation("androidx.compose.material3:material3:1.3.0")
+    implementation("androidx.compose.material:material-icons-extended:1.7.0")
 
     // --- Hilt (Dependency Injection) ---
     implementation("com.google.dagger:hilt-android:2.56.2")

@@ -14,6 +14,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import dagger.hilt.android.AndroidEntryPoint
+import uk.ac.tees.mad.petcaretracker.Screen.CreateScreen
 import uk.ac.tees.mad.petcaretracker.Screen.HomeScreen
 import uk.ac.tees.mad.petcaretracker.Screen.LoginScreen
 import uk.ac.tees.mad.petcaretracker.Screen.RegisterScreen
@@ -40,6 +41,7 @@ sealed class PetNavigation(val route: String) {
     object LoginScreen : PetNavigation("login_screen")
     object RegisterScreen : PetNavigation("register_screen")
     object HomeScreen : PetNavigation("home_screen")
+    object CreateScreen : PetNavigation("create_screen")
 
 }
 
@@ -60,6 +62,9 @@ fun AppNavigation(innerPadding: PaddingValues) {
         }
         composable(PetNavigation.HomeScreen.route){
             HomeScreen(navController, viewModel)
+        }
+        composable(PetNavigation.CreateScreen.route){
+            CreateScreen(navController, viewModel)
         }
     }
 }
