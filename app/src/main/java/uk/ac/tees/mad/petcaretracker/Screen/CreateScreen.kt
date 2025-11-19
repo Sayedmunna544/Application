@@ -24,19 +24,26 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.ArrowDropDown
 import androidx.compose.material.icons.rounded.BrowseGallery
 import androidx.compose.material.icons.rounded.Camera
+import androidx.compose.material.icons.rounded.DateRange
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.DatePicker
+import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.Divider
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextFieldColors
 import androidx.compose.material3.TextFieldDefaults
+import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
@@ -53,13 +60,17 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import uk.ac.tees.mad.petcaretracker.MainViewModel
 import uk.ac.tees.mad.petcaretracker.R
 import java.io.InputStream
+import java.text.SimpleDateFormat
+import java.util.Locale
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CreateScreen(navController: NavHostController, viewModel: MainViewModel) {
     val imageBitmap = remember { mutableStateOf<Bitmap?>(null) }
@@ -88,6 +99,16 @@ fun CreateScreen(navController: NavHostController, viewModel: MainViewModel) {
     var weight by remember { mutableStateOf("") }
     var notes by remember { mutableStateOf("") }
     val vaccinations = remember { mutableStateListOf<String>() }
+    var vaccineName by remember { mutableStateOf("")}
+    var vaccineDosage by remember { mutableStateOf("")}
+    val showAlertDialog = remember { mutableStateOf(false) }
+    val datePickerState = rememberDatePickerState(
+        initialSelectedDateMillis = System.currentTimeMillis()
+    )
+    val showDatePickerDialog = remember {
+        mutableStateOf(false)
+    }
+
     val imagePickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
@@ -133,7 +154,7 @@ fun CreateScreen(navController: NavHostController, viewModel: MainViewModel) {
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
             Box(
                 modifier = Modifier
-                    .padding(16.dp)
+                    .padding(8.dp)
                     .size(200.dp),
                 contentAlignment = Alignment.Center
             ) {
@@ -143,7 +164,7 @@ fun CreateScreen(navController: NavHostController, viewModel: MainViewModel) {
                         contentDescription = "Selected pet image",
                         modifier = Modifier
                             .fillMaxSize()
-                            .clip(CircleShape),
+                            .clip(CircleShape).border(1.dp, Color.Black, CircleShape),
                         contentScale = ContentScale.FillBounds
                     )
                 } else {
@@ -152,7 +173,7 @@ fun CreateScreen(navController: NavHostController, viewModel: MainViewModel) {
                         contentDescription = null,
                         modifier = Modifier
                             .fillMaxSize()
-                            .clip(CircleShape),
+                            .clip(CircleShape).border(1.dp, Color.Black, CircleShape),
                         contentScale = ContentScale.Crop
                     )
                 }
@@ -238,11 +259,36 @@ fun CreateScreen(navController: NavHostController, viewModel: MainViewModel) {
             )
             OutlinedTextField(
                 value = dateOfBirth,
-                onValueChange = { dateOfBirth = it },
+                onValueChange = { },
                 label = { Text("Date of Birth") },
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(24.dp)
+                shape = RoundedCornerShape(24.dp),
+                trailingIcon = {
+                    Icon(
+                        Icons.Rounded.DateRange,
+                        contentDescription = null,
+                        modifier = Modifier.clickable {
+                            showDatePickerDialog.value = true
+                        }
+                    )
+                }
             )
+            if (showDatePickerDialog.value) {
+                DatePickerDialog(onDismissRequest = { showDatePickerDialog.value = false }, confirmButton = {
+                    Button(onClick = {
+                        dateOfBirth = "${datePickerState.selectedDateMillis}"
+                        if (datePickerState.selectedDateMillis != null) {
+                            val fomatter = SimpleDateFormat("dd/MM/yyyy", Locale.US)
+                            dateOfBirth = fomatter.format(datePickerState.selectedDateMillis!!)
+                        }
+                        showDatePickerDialog.value = false
+                    }) {
+                        Text("Confirm")
+                    }
+                }) {
+                    DatePicker(state = datePickerState)
+                }
+            }
             Box {
                 OutlinedTextField(
                     value = gender,
@@ -308,15 +354,173 @@ fun CreateScreen(navController: NavHostController, viewModel: MainViewModel) {
                 onValueChange = { notes = it },
                 label = { Text("Notes") },
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(24.dp)
+                shape = RoundedCornerShape(24.dp),
+                minLines = 3
             )
-            OutlinedTextField(
-                value = petName,
-                onValueChange = { petName = it },
-                label = { Text("Pet Name") },
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(24.dp)
-            )
+            Column(modifier = Modifier.padding(vertical = 8.dp)) {
+                Row (modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween){
+                    Text("Vaccinations:")
+                    Icon(Icons.Rounded.Add, contentDescription = null, modifier = Modifier.clickable {
+                        showAlertDialog.value = true
+                        }
+                    )
+                }
+                vaccinations.forEach {
+                    Text(it)
+                    Divider()
+                }
+            }
+            if (showAlertDialog.value) {
+                AlertDialog(onDismissRequest = { showAlertDialog.value = false }) {
+                    Column(
+                        modifier = Modifier.clip(
+                            RoundedCornerShape(24.dp)
+                        ).background(Color.White).padding(8.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text("Vaccine Details", fontWeight = FontWeight.SemiBold, fontSize = 24.sp)
+                        OutlinedTextField(
+                            value = vaccineName,
+                            onValueChange = { vaccineName = it },
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(24.dp),
+                            label = { Text("Vaccine Name") }
+                        )
+                        OutlinedTextField(
+                            value = vaccineDosage,
+                            onValueChange = { vaccineDosage = it },
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(24.dp),
+                            label = { Text("Dosage") },
+                            trailingIcon = {
+                                Text("ml")
+                            }
+                        )
+                        Button(onClick = {
+                            vaccinations.add("$vaccineName - $vaccineDosage")
+                            vaccineName = ""
+                            vaccineDosage = ""
+                            showAlertDialog.value = false
+                        }, shape = RoundedCornerShape(24.dp), modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)) {
+                            Text("Add")
+                        }
+                    }
+                }
+            }
+            Button(onClick = {}, modifier = Modifier.fillMaxWidth().padding(bottom = 20.dp), shape = RoundedCornerShape(24.dp)) {
+                Text("Save and Continue")
+            }
+        }
+    }
+}
+
+
+@Preview(showBackground = true, name = "Create Pet Screen - Filled Example")
+@Composable
+fun CreateScreenPreview() {
+    var petName by remember { mutableStateOf("Max") }
+    var species by remember { mutableStateOf("Dog") }
+    var showsSpeciesDropdown by remember { mutableStateOf(false) }
+    var breed by remember { mutableStateOf("Golden Retriever") }
+    var gender by remember { mutableStateOf("Male") }
+    var showsGenderDropdown by remember { mutableStateOf(false) }
+    var dateOfBirth by remember { mutableStateOf("15/06/2022") }
+    var weight by remember { mutableStateOf("32") }
+    var notes by remember { mutableStateOf("Very friendly, loves walks and treats.") }
+    var vaccineName by remember { mutableStateOf("") }
+    var vaccineDosage by remember { mutableStateOf("") }
+    var showAlertDialog by remember { mutableStateOf(false) }
+    var showDatePickerDialog by remember { mutableStateOf(false) }
+    val vaccinations = remember { mutableStateListOf("Rabies - 1ml", "DHPP - 2ml") }
+
+    val scroll = rememberScrollState()
+
+    Column(modifier = Modifier.fillMaxSize()) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .systemBarsPadding()
+                .padding(horizontal = 10.dp)
+        ) {
+            Icon(Icons.Rounded.ArrowBack, contentDescription = null, modifier = Modifier.size(30.dp))
+            Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                Text("Add Pet", fontSize = 24.sp, fontWeight = FontWeight.SemiBold)
+            }
+        }
+
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
+            Box(modifier = Modifier.padding(8.dp).size(200.dp), contentAlignment = Alignment.Center) {
+                Image(
+                    painter = painterResource(R.drawable.background_image),
+                    contentDescription = null,
+                    modifier = Modifier.fillMaxSize().clip(CircleShape).border(2.dp, Color.Black, CircleShape),
+                    contentScale = ContentScale.Crop
+                )
+            }
+        }
+
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+            horizontalArrangement = Arrangement.SpaceAround
+        ) {
+            Button(onClick = {}) { Icon(Icons.Rounded.Camera, contentDescription = null) }
+            Button(onClick = {}) { Icon(Icons.Rounded.BrowseGallery, contentDescription = null) }
+        }
+
+        Divider()
+
+        Column(
+            modifier = Modifier
+                .padding(vertical = 8.dp, horizontal = 24.dp)
+                .verticalScroll(scroll)
+        ) {
+            OutlinedTextField(value = petName, onValueChange = {}, label = { Text("Pet Name") }, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(24.dp))
+
+            Box {
+                OutlinedTextField(value = species, onValueChange = {}, readOnly = true, label = { Text("Species") }, modifier = Modifier.fillMaxWidth().clickable { showsSpeciesDropdown = true },
+                    trailingIcon = { Icon(Icons.Rounded.ArrowDropDown, null) }, shape = RoundedCornerShape(24.dp))
+                DropdownMenu(expanded = showsSpeciesDropdown, onDismissRequest = { showsSpeciesDropdown = false }) {
+                    listOf("Dog", "Cat", "Bird", "Fish", "Reptile", "Other").forEach {
+                        DropdownMenuItem(text = { Text(it) }, onClick = { species = it; showsSpeciesDropdown = false })
+                    }
+                }
+            }
+
+            OutlinedTextField(value = breed, onValueChange = {}, label = { Text("Breed") }, modifier = Modifier.fillMaxWidth().padding(top = 8.dp), shape = RoundedCornerShape(24.dp))
+
+            OutlinedTextField(value = dateOfBirth, onValueChange = {}, readOnly = true, label = { Text("Date of Birth") }, modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+                trailingIcon = { Icon(Icons.Rounded.DateRange, null) }, shape = RoundedCornerShape(24.dp))
+
+            Box {
+                OutlinedTextField(value = gender, onValueChange = {}, readOnly = true, label = { Text("Gender") }, modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+                    trailingIcon = { Icon(Icons.Rounded.ArrowDropDown, null) }, shape = RoundedCornerShape(24.dp))
+                DropdownMenu(expanded = showsGenderDropdown, onDismissRequest = { showsGenderDropdown = false }) {
+                    listOf("Male", "Female", "Other").forEach {
+                        DropdownMenuItem(text = { Text(it) }, onClick = { gender = it; showsGenderDropdown = false })
+                    }
+                }
+            }
+
+            OutlinedTextField(value = weight, onValueChange = {}, label = { Text("Weight") }, modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+                trailingIcon = { Text("kg") }, shape = RoundedCornerShape(24.dp))
+
+            OutlinedTextField(value = notes, onValueChange = {}, label = { Text("Notes") }, modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+                minLines = 3, shape = RoundedCornerShape(24.dp))
+
+            Column(modifier = Modifier.padding(vertical = 12.dp)) {
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                    Text("Vaccinations:", fontWeight = FontWeight.Medium)
+                    Icon(Icons.Rounded.Add, contentDescription = null, modifier = Modifier.clickable { showAlertDialog = true })
+                }
+                vaccinations.forEach {
+                    Text(it, modifier = Modifier.padding(vertical = 4.dp))
+                    Divider()
+                }
+            }
+
+            Button(onClick = {}, modifier = Modifier.fillMaxWidth().padding(vertical = 20.dp), shape = RoundedCornerShape(24.dp)) {
+                Text("Save and Continue")
+            }
         }
     }
 }

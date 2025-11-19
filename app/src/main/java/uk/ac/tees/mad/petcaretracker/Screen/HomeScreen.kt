@@ -35,6 +35,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
@@ -156,6 +157,45 @@ fun HomeScreen(navController: NavHostController, viewModel: MainViewModel) {
                 Text("${ cameraPermissionGranted}")
                 Text("${ storagePermissionGranted}")
 
+            }
+        }
+    }
+}
+
+
+@Preview(showBackground = true, name = "Home Screen")
+@Composable
+fun HomeScreenPreview() {
+    Scaffold(
+        modifier = Modifier.fillMaxSize(),
+        floatingActionButton = {
+            FloatingActionButton(onClick = {}) {
+                Icon(Icons.Default.Add, contentDescription = "Add")
+            }
+        }
+    ) { paddingValues ->
+        Image(
+            painter = painterResource(id = R.drawable.home_screen),
+            contentDescription = null,
+            contentScale = ContentScale.FillHeight,
+            modifier = Modifier
+                .fillMaxSize()
+                .blur(4.dp)
+        )
+
+        Column(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .shadow(4.dp, RectangleShape, clip = false)
+                    .background(Color.White.copy(alpha = 0.85f))
+                    .padding(16.dp)
+            ) {
+                Text(
+                    text = "PetCare Tracker",
+                    fontSize = 24.sp,
+                    fontWeight = FontWeight.SemiBold
+                )
             }
         }
     }
