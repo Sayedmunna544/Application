@@ -3,6 +3,7 @@ package uk.ac.tees.mad.petcaretracker.Screen
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
+import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
@@ -41,8 +42,6 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextFieldColors
-import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -54,13 +53,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Outline
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
@@ -73,6 +70,7 @@ import java.util.Locale
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CreateScreen(navController: NavHostController, viewModel: MainViewModel) {
+    val isLoading = viewModel.loading.value
     val imageBitmap = remember { mutableStateOf<Bitmap?>(null) }
     val context = LocalContext.current
     var petName by remember { mutableStateOf("") }
@@ -407,119 +405,18 @@ fun CreateScreen(navController: NavHostController, viewModel: MainViewModel) {
                     }
                 }
             }
-            Button(onClick = {}, modifier = Modifier.fillMaxWidth().padding(bottom = 20.dp), shape = RoundedCornerShape(24.dp)) {
-                Text("Save and Continue")
-            }
-        }
-    }
-}
-
-
-@Preview(showBackground = true, name = "Create Pet Screen - Filled Example")
-@Composable
-fun CreateScreenPreview() {
-    var petName by remember { mutableStateOf("Max") }
-    var species by remember { mutableStateOf("Dog") }
-    var showsSpeciesDropdown by remember { mutableStateOf(false) }
-    var breed by remember { mutableStateOf("Golden Retriever") }
-    var gender by remember { mutableStateOf("Male") }
-    var showsGenderDropdown by remember { mutableStateOf(false) }
-    var dateOfBirth by remember { mutableStateOf("15/06/2022") }
-    var weight by remember { mutableStateOf("32") }
-    var notes by remember { mutableStateOf("Very friendly, loves walks and treats.") }
-    var vaccineName by remember { mutableStateOf("") }
-    var vaccineDosage by remember { mutableStateOf("") }
-    var showAlertDialog by remember { mutableStateOf(false) }
-    var showDatePickerDialog by remember { mutableStateOf(false) }
-    val vaccinations = remember { mutableStateListOf("Rabies - 1ml", "DHPP - 2ml") }
-
-    val scroll = rememberScrollState()
-
-    Column(modifier = Modifier.fillMaxSize()) {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .systemBarsPadding()
-                .padding(horizontal = 10.dp)
-        ) {
-            Icon(Icons.Rounded.ArrowBack, contentDescription = null, modifier = Modifier.size(30.dp))
-            Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-                Text("Add Pet", fontSize = 24.sp, fontWeight = FontWeight.SemiBold)
-            }
-        }
-
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
-            Box(modifier = Modifier.padding(8.dp).size(200.dp), contentAlignment = Alignment.Center) {
-                Image(
-                    painter = painterResource(R.drawable.background_image),
-                    contentDescription = null,
-                    modifier = Modifier.fillMaxSize().clip(CircleShape).border(2.dp, Color.Black, CircleShape),
-                    contentScale = ContentScale.Crop
-                )
-            }
-        }
-
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
-            horizontalArrangement = Arrangement.SpaceAround
-        ) {
-            Button(onClick = {}) { Icon(Icons.Rounded.Camera, contentDescription = null) }
-            Button(onClick = {}) { Icon(Icons.Rounded.BrowseGallery, contentDescription = null) }
-        }
-
-        Divider()
-
-        Column(
-            modifier = Modifier
-                .padding(vertical = 8.dp, horizontal = 24.dp)
-                .verticalScroll(scroll)
-        ) {
-            OutlinedTextField(value = petName, onValueChange = {}, label = { Text("Pet Name") }, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(24.dp))
-
-            Box {
-                OutlinedTextField(value = species, onValueChange = {}, readOnly = true, label = { Text("Species") }, modifier = Modifier.fillMaxWidth().clickable { showsSpeciesDropdown = true },
-                    trailingIcon = { Icon(Icons.Rounded.ArrowDropDown, null) }, shape = RoundedCornerShape(24.dp))
-                DropdownMenu(expanded = showsSpeciesDropdown, onDismissRequest = { showsSpeciesDropdown = false }) {
-                    listOf("Dog", "Cat", "Bird", "Fish", "Reptile", "Other").forEach {
-                        DropdownMenuItem(text = { Text(it) }, onClick = { species = it; showsSpeciesDropdown = false })
-                    }
+            Button(onClick = {
+                if (imageBitmap.value != null && petName.isNotEmpty() && species.isNotEmpty() && breed.isNotEmpty() && dateOfBirth.isNotEmpty() && gender.isNotEmpty() && weight.isNotEmpty() && notes.isNotEmpty()) {
+                    viewModel.savePetData(context, imageBitmap.value!!, petName, species, breed, dateOfBirth, gender, weight, notes, vaccinations)
+                }else{
+                    Toast.makeText(context, "Please fill all the fields", Toast.LENGTH_SHORT).show()
                 }
-            }
-
-            OutlinedTextField(value = breed, onValueChange = {}, label = { Text("Breed") }, modifier = Modifier.fillMaxWidth().padding(top = 8.dp), shape = RoundedCornerShape(24.dp))
-
-            OutlinedTextField(value = dateOfBirth, onValueChange = {}, readOnly = true, label = { Text("Date of Birth") }, modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
-                trailingIcon = { Icon(Icons.Rounded.DateRange, null) }, shape = RoundedCornerShape(24.dp))
-
-            Box {
-                OutlinedTextField(value = gender, onValueChange = {}, readOnly = true, label = { Text("Gender") }, modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
-                    trailingIcon = { Icon(Icons.Rounded.ArrowDropDown, null) }, shape = RoundedCornerShape(24.dp))
-                DropdownMenu(expanded = showsGenderDropdown, onDismissRequest = { showsGenderDropdown = false }) {
-                    listOf("Male", "Female", "Other").forEach {
-                        DropdownMenuItem(text = { Text(it) }, onClick = { gender = it; showsGenderDropdown = false })
-                    }
+            }, enabled = !isLoading, modifier = Modifier.fillMaxWidth().padding(bottom = 20.dp), shape = RoundedCornerShape(24.dp)) {
+                if (isLoading) {
+                    Text("Loading...")
+                } else {
+                    Text("Save and Continue")
                 }
-            }
-
-            OutlinedTextField(value = weight, onValueChange = {}, label = { Text("Weight") }, modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
-                trailingIcon = { Text("kg") }, shape = RoundedCornerShape(24.dp))
-
-            OutlinedTextField(value = notes, onValueChange = {}, label = { Text("Notes") }, modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
-                minLines = 3, shape = RoundedCornerShape(24.dp))
-
-            Column(modifier = Modifier.padding(vertical = 12.dp)) {
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    Text("Vaccinations:", fontWeight = FontWeight.Medium)
-                    Icon(Icons.Rounded.Add, contentDescription = null, modifier = Modifier.clickable { showAlertDialog = true })
-                }
-                vaccinations.forEach {
-                    Text(it, modifier = Modifier.padding(vertical = 4.dp))
-                    Divider()
-                }
-            }
-
-            Button(onClick = {}, modifier = Modifier.fillMaxWidth().padding(vertical = 20.dp), shape = RoundedCornerShape(24.dp)) {
-                Text("Save and Continue")
             }
         }
     }
