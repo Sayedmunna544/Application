@@ -140,21 +140,8 @@ fun HomeScreen(navController: NavHostController, viewModel: MainViewModel) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .shadow(
-                        elevation = 4.dp, // Adjust elevation for shadow intensity
-                        shape = RectangleShape,
-                        clip = false, // Set to false to allow shadow to extend outside bounds
-                        spotColor = Color.LightGray,
-                        ambientColor = Color.LightGray
-                    )
-                    .offset(y = (-2).dp) // Slightly shift up to make shadow appear below
-                    .background(Color.Transparent) // Ensure background to prevent shadow overlap
-                    .clipToBounds() // Clip content to prevent shadow from appearing inside
             ) {
                 Text("PetCare Tracker", fontSize = 24.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(12.dp))
-                Text("${ notificationPermissionGranted}")
-                Text("${ cameraPermissionGranted}")
-                Text("${ storagePermissionGranted}")
 
             }
         }

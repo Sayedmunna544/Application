@@ -44,7 +44,7 @@ class MainViewModel @Inject constructor(
             auth.createUserWithEmailAndPassword(email, password)
                 .addOnCompleteListener {
                     if (it.isSuccessful) {
-                        firestore.collection("users").document(auth.currentUser!!.uid).set(
+                        firestore.collection("users").document(auth.currentUser!!.uid).collection("user_details").add(
                             hashMapOf(
                                 "fullName" to fullName,
                                 "email" to email,
@@ -119,7 +119,7 @@ class MainViewModel @Inject constructor(
             val fileName = uid + System.currentTimeMillis().toString() + ".jpg"
             val uri = saveImageToDevice(context, bitmap, fileName)
             if(uri != null){
-                firestore.collection("pets").add(
+                firestore.collection("users").document(auth.currentUser!!.uid).collection("user_pets").add(
                     hashMapOf(
                         "petName" to petName,
                         "species" to species,
