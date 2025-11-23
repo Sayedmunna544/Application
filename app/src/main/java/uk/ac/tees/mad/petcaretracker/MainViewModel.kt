@@ -3,6 +3,7 @@ package uk.ac.tees.mad.petcaretracker
 import android.content.Context
 import android.graphics.Bitmap
 import android.net.Uri
+import android.util.Log
 import android.widget.Toast
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.snapshots.SnapshotStateList
@@ -12,6 +13,7 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
+import uk.ac.tees.mad.petcaretracker.Model.PetData
 import java.io.File
 import javax.inject.Inject
 
@@ -22,10 +24,12 @@ class MainViewModel @Inject constructor(
 ) : ViewModel() {
 
     val _isLoggedIn = mutableStateOf(false)
+    val petData = mutableStateOf<List<PetData>>(listOf());
 
     init {
         if (auth.currentUser != null) {
             _isLoggedIn.value = true
+            fetchPetData()
         }
     }
 
@@ -138,6 +142,17 @@ class MainViewModel @Inject constructor(
                     Toast.makeText(context, it.localizedMessage, Toast.LENGTH_SHORT).show()
                     loading.value = false
                 }
+            }
+        }
+    }
+
+    fun fetchPetData(){
+        viewModelScope.launch {
+            firestore.collection("users").document(auth.currentUser!!.uid).collection("user_pets").get().addOnSuccessListener {
+                petData.value = it.toObjects(PetData::class.java)
+                Log.d("Pet_Data", it.toObjects(PetData::class.java).toString())
+            }.addOnFailureListener {
+                Log.d("error", it.localizedMessage)
             }
         }
     }
