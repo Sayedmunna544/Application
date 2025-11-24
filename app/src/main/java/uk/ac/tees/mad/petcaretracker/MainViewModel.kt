@@ -13,6 +13,7 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
+import uk.ac.tees.mad.petcaretracker.Data.PetApi
 import uk.ac.tees.mad.petcaretracker.Model.PetData
 import java.io.File
 import javax.inject.Inject
@@ -20,7 +21,8 @@ import javax.inject.Inject
 @HiltViewModel
 class MainViewModel @Inject constructor(
     private val auth: FirebaseAuth,
-    private val firestore: FirebaseFirestore
+    private val firestore: FirebaseFirestore,
+    private val petApi: PetApi
 ) : ViewModel() {
 
     val _isLoggedIn = mutableStateOf(false)
@@ -30,6 +32,7 @@ class MainViewModel @Inject constructor(
         if (auth.currentUser != null) {
             _isLoggedIn.value = true
             fetchPetData()
+            fetchFacts()
         }
     }
 
@@ -58,6 +61,7 @@ class MainViewModel @Inject constructor(
                             loading.value = false
                             Toast.makeText(context, "Sign up successful", Toast.LENGTH_SHORT).show()
                             _isLoggedIn.value = true
+                            fetchPetData()
                         }.addOnFailureListener {
                             loading.value = false
                             Toast.makeText(context, it.localizedMessage, Toast.LENGTH_SHORT).show()
@@ -81,6 +85,7 @@ class MainViewModel @Inject constructor(
                         loading.value = false
                         _isLoggedIn.value = true
                         Toast.makeText(context, "Log in successful", Toast.LENGTH_SHORT).show()
+                        fetchPetData()
                     }
                 }
                 .addOnFailureListener {
@@ -138,6 +143,7 @@ class MainViewModel @Inject constructor(
                 ).addOnSuccessListener {
                     Toast.makeText(context, "Pet added successfully", Toast.LENGTH_SHORT).show()
                     loading.value = false
+                    fetchPetData()
                 }.addOnFailureListener {
                     Toast.makeText(context, it.localizedMessage, Toast.LENGTH_SHORT).show()
                     loading.value = false
@@ -154,6 +160,13 @@ class MainViewModel @Inject constructor(
             }.addOnFailureListener {
                 Log.d("error", it.localizedMessage)
             }
+        }
+    }
+
+    fun fetchFacts(){
+        viewModelScope.launch {
+            val response = petApi.getFacts()
+            Log.d("Facts", response.toString())
         }
     }
 }
