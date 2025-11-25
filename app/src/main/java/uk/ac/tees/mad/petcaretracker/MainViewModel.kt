@@ -13,6 +13,7 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
+import uk.ac.tees.mad.petcaretracker.Data.MeowResponse
 import uk.ac.tees.mad.petcaretracker.Data.PetApi
 import uk.ac.tees.mad.petcaretracker.Model.PetData
 import java.io.File
@@ -27,12 +28,12 @@ class MainViewModel @Inject constructor(
 
     val _isLoggedIn = mutableStateOf(false)
     val petData = mutableStateOf<List<PetData>>(listOf());
+    val facts = mutableStateOf(MeowResponse(listOf()))
 
     init {
         if (auth.currentUser != null) {
             _isLoggedIn.value = true
             fetchPetData()
-            fetchFacts()
         }
     }
 
@@ -160,13 +161,12 @@ class MainViewModel @Inject constructor(
             }.addOnFailureListener {
                 Log.d("error", it.localizedMessage)
             }
+            fetchFacts()
         }
     }
 
-    fun fetchFacts(){
-        viewModelScope.launch {
-            val response = petApi.getFacts()
-            Log.d("Facts", response.toString())
-        }
+    suspend fun fetchFacts(){
+        val response = petApi.getFacts()
+        facts.value = response
     }
 }

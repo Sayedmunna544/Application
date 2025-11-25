@@ -6,19 +6,26 @@ import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyHorizontalGrid
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
@@ -28,9 +35,13 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.blur
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -40,6 +51,7 @@ import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import androidx.navigation.NavHostController
 import coil.compose.AsyncImage
+import kotlinx.coroutines.launch
 import uk.ac.tees.mad.petcaretracker.MainViewModel
 import uk.ac.tees.mad.petcaretracker.Model.PetData
 import uk.ac.tees.mad.petcaretracker.PetNavigation
@@ -50,6 +62,8 @@ import java.io.File
 fun HomeScreen(navController: NavHostController, viewModel: MainViewModel) {
     val context = LocalContext.current
     val petData = viewModel.petData.value
+    val petFacts = viewModel.facts.value
+    val scope = rememberCoroutineScope()
     var cameraPermissionGranted by remember { mutableStateOf(false) }
     var storagePermissionGranted by remember { mutableStateOf(false) }
     var notificationPermissionGranted by remember { mutableStateOf(false) }
@@ -143,25 +157,47 @@ fun HomeScreen(navController: NavHostController, viewModel: MainViewModel) {
         Column(modifier = Modifier.fillMaxSize().padding(iv)) {
             Row(
                 modifier = Modifier
-                    .fillMaxWidth()
+                    .fillMaxWidth(),
+                horizontalArrangement = Arrangement.Center
             ) {
                 Text("PetCare Tracker", fontSize = 24.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(12.dp))
             }
-            LazyRow(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(12.dp)
-            ) {
-                items(petData.chunked(3)) { chunk ->
-                    Column(
-                        modifier = Modifier
-                            .padding(end = 16.dp)
-                            .fillMaxHeight()
-                    ) {
-                        chunk.forEach { pet ->
-                            PetCard(pet)
+            Column(modifier = Modifier.fillMaxWidth().clip(
+                RoundedCornerShape(24.dp)
+            ).background(Color(0xffc7ebe6)).padding(8.dp)) {
+                Row(modifier = Modifier.fillMaxWidth().padding(8.dp), horizontalArrangement = androidx.compose.foundation.layout.Arrangement.SpaceBetween) {
+                    Text("Random Pet Fact", fontWeight = FontWeight.SemiBold, fontSize = 18.sp)
+                    Icon(Icons.Default.Refresh, contentDescription = null, modifier = Modifier.clickable{
+                        scope.launch {
+                            viewModel.fetchFacts()
+                        }
+                    })
+                }
+                Row(modifier = Modifier.fillMaxWidth().padding(8.dp)) {
+                    Box(
+                        modifier = Modifier.size(50.dp).clip(RoundedCornerShape(12.dp)).background(Color(0xfffcb695))
+                    , contentAlignment = Alignment.Center) {
+                        Icon(painterResource(R.drawable.paw), contentDescription = null, tint = Color.DarkGray, modifier = Modifier.size(24.dp))
+                    }
+                    Column(modifier = Modifier.padding(start = 8.dp)) {
+                        if(petFacts.data.isNotEmpty()) {
+                            Text(petFacts.data[0], fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
+                        }else{
+                            Text("Loading...")
                         }
                     }
+
+                }
+            }
+
+            Text("My Pets", fontSize = 18.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(start = 12.dp, top = 12.dp))
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(4.dp)
+            ) {
+                items(petData) {
+                    PetCard(it)
                 }
             }
         }
@@ -170,19 +206,39 @@ fun HomeScreen(navController: NavHostController, viewModel: MainViewModel) {
 
 @Composable
 fun PetCard(data: PetData) {
-    Column(
+    Row(
         modifier = Modifier
-            .padding(8.dp)
+            .fillMaxWidth()
+            .padding(8.dp),
+        horizontalArrangement = Arrangement.Start,
+        verticalAlignment = Alignment.CenterVertically
     ) {
         AsyncImage(
             model = File(data.image.removePrefix("file://")),
             contentDescription = null,
-            modifier = Modifier.size(100.dp)
+            modifier = Modifier
+                .size(70.dp)
+                .clip(CircleShape),
+            contentScale = ContentScale.Crop
         )
-        Text(
-            data.petName,
-            fontSize = 16.sp,
-            fontWeight = FontWeight.Medium
-        )
+        Column(
+            modifier = Modifier.padding(8.dp),
+            verticalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+            Text(
+                text = data.petName,
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Medium
+            )
+            Text(text = data.species)
+        }
+        Spacer(modifier = Modifier.weight(1f))
+        Column(
+            modifier = Modifier.padding(8.dp),
+            verticalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+            Text(text = data.breed)
+            Text(text = data.dateOfBirth)
+        }
     }
 }
