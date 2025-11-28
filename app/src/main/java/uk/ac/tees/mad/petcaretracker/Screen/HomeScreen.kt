@@ -26,6 +26,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material3.FabPosition
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
@@ -142,12 +143,17 @@ fun HomeScreen(navController: NavHostController, viewModel: MainViewModel) {
     Scaffold(modifier = Modifier.fillMaxSize(),
         floatingActionButton = {
             FloatingActionButton(onClick = {
-
                 navController.navigate(PetNavigation.CreateScreen.route)
-            }) {
-                Icon(Icons.Default.Add, contentDescription = "Logout")
+            }, shape = RoundedCornerShape(24.dp), containerColor = Color(0xff617cf2)
+                ) {
+                Row(modifier = Modifier.padding(4.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Box(modifier = Modifier.padding(horizontal = 4.dp).size(24.dp).clip(CircleShape).background(Color.White)) {
+                        Icon(Icons.Default.Add, contentDescription = "Logout", tint = Color(0xff617cf2))
+                    }
+                    Text("Add New Pet", color = Color.White, modifier = Modifier.padding(horizontal = 4.dp))
+                }
             }
-        }) { iv ->
+        }, floatingActionButtonPosition = FabPosition.Center) { iv ->
         Image(
             painterResource(R.drawable.home_screen),
             contentDescription = null,
@@ -209,36 +215,38 @@ fun PetCard(data: PetData) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(8.dp),
+            .padding(8.dp).clip(RoundedCornerShape(24.dp)).background(Color(0xfffcb695)),
         horizontalArrangement = Arrangement.Start,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        AsyncImage(
-            model = File(data.image.removePrefix("file://")),
-            contentDescription = null,
-            modifier = Modifier
-                .size(70.dp)
-                .clip(CircleShape),
-            contentScale = ContentScale.Crop
-        )
-        Column(
-            modifier = Modifier.padding(8.dp),
-            verticalArrangement = Arrangement.spacedBy(4.dp)
-        ) {
-            Text(
-                text = data.petName,
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Medium
+        Row(modifier = Modifier.padding(4.dp)) {
+            AsyncImage(
+                model = File(data.image.removePrefix("file://")),
+                contentDescription = null,
+                modifier = Modifier
+                    .size(70.dp)
+                    .clip(CircleShape),
+                contentScale = ContentScale.Crop
             )
-            Text(text = data.species)
-        }
-        Spacer(modifier = Modifier.weight(1f))
-        Column(
-            modifier = Modifier.padding(8.dp),
-            verticalArrangement = Arrangement.spacedBy(4.dp)
-        ) {
-            Text(text = data.breed)
-            Text(text = data.dateOfBirth)
+            Column(
+                modifier = Modifier.padding(8.dp),
+                verticalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                Text(
+                    text = data.petName,
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Medium
+                )
+                Text(text = data.species)
+            }
+            Spacer(modifier = Modifier.weight(1f))
+            Column(
+                modifier = Modifier.padding(8.dp),
+                verticalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                Text(text = data.breed)
+                Text(text = data.dateOfBirth)
+            }
         }
     }
 }
