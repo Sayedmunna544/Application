@@ -13,13 +13,18 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.google.gson.Gson
 import dagger.hilt.android.AndroidEntryPoint
+import uk.ac.tees.mad.petcaretracker.Model.PetData
 import uk.ac.tees.mad.petcaretracker.Screen.CreateScreen
+import uk.ac.tees.mad.petcaretracker.Screen.DetailsScreen
 import uk.ac.tees.mad.petcaretracker.Screen.HomeScreen
 import uk.ac.tees.mad.petcaretracker.Screen.LoginScreen
 import uk.ac.tees.mad.petcaretracker.Screen.RegisterScreen
 import uk.ac.tees.mad.petcaretracker.Screen.SplashScreen
 import uk.ac.tees.mad.petcaretracker.ui.theme.PetCareTrackerTheme
+import java.net.URLDecoder
+import java.nio.charset.StandardCharsets
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -42,7 +47,9 @@ sealed class PetNavigation(val route: String) {
     object RegisterScreen : PetNavigation("register_screen")
     object HomeScreen : PetNavigation("home_screen")
     object CreateScreen : PetNavigation("create_screen")
-
+    object DetailsScreen : PetNavigation("details_screen/{petJson}") {
+        fun createRoute(petJson: String) = "details_screen/$petJson"
+    }
 }
 
 @Composable
@@ -65,6 +72,21 @@ fun AppNavigation(innerPadding: PaddingValues) {
         }
         composable(PetNavigation.CreateScreen.route){
             CreateScreen(navController, viewModel)
+        }
+        composable(PetNavigation.DetailsScreen.route) { backStackEntry ->
+            val petJson = backStackEntry.arguments?.getString("petJson")
+            val gson = Gson()
+            val petData: PetData? = if (petJson != null) {
+                try {
+                    val decodedJson = URLDecoder.decode(petJson, StandardCharsets.UTF_8.toString())
+                    gson.fromJson(decodedJson, PetData::class.java)
+                } catch (e: Exception) {
+                    null
+                }
+            } else {
+                null
+            }
+            DetailsScreen(navController, viewModel, petData)
         }
     }
 }

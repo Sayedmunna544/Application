@@ -52,12 +52,15 @@ import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import androidx.navigation.NavHostController
 import coil.compose.AsyncImage
+import com.google.gson.Gson
 import kotlinx.coroutines.launch
 import uk.ac.tees.mad.petcaretracker.MainViewModel
 import uk.ac.tees.mad.petcaretracker.Model.PetData
 import uk.ac.tees.mad.petcaretracker.PetNavigation
 import uk.ac.tees.mad.petcaretracker.R
 import java.io.File
+import java.net.URLEncoder
+import java.nio.charset.StandardCharsets
 
 @Composable
 fun HomeScreen(navController: NavHostController, viewModel: MainViewModel) {
@@ -140,55 +143,110 @@ fun HomeScreen(navController: NavHostController, viewModel: MainViewModel) {
         }
     }
 
-    Scaffold(modifier = Modifier.fillMaxSize(),
+    Scaffold(
+        modifier = Modifier.fillMaxSize(),
         floatingActionButton = {
-            FloatingActionButton(onClick = {
-                navController.navigate(PetNavigation.CreateScreen.route)
-            }, shape = RoundedCornerShape(24.dp), containerColor = Color(0xff617cf2)
+            FloatingActionButton(
+                onClick = {
+                    navController.navigate(PetNavigation.CreateScreen.route)
+                }, shape = RoundedCornerShape(24.dp), containerColor = Color(0xff617cf2)
+            ) {
+                Row(
+                    modifier = Modifier.padding(4.dp),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                Row(modifier = Modifier.padding(4.dp), verticalAlignment = Alignment.CenterVertically) {
-                    Box(modifier = Modifier.padding(horizontal = 4.dp).size(24.dp).clip(CircleShape).background(Color.White)) {
-                        Icon(Icons.Default.Add, contentDescription = "Logout", tint = Color(0xff617cf2))
+                    Box(
+                        modifier = Modifier
+                            .padding(horizontal = 4.dp)
+                            .size(24.dp)
+                            .clip(CircleShape)
+                            .background(Color.White)
+                    ) {
+                        Icon(
+                            Icons.Default.Add,
+                            contentDescription = "Logout",
+                            tint = Color(0xff617cf2)
+                        )
                     }
-                    Text("Add New Pet", color = Color.White, modifier = Modifier.padding(horizontal = 4.dp))
+                    Text(
+                        "Add New Pet",
+                        color = Color.White,
+                        modifier = Modifier.padding(horizontal = 4.dp)
+                    )
                 }
             }
-        }, floatingActionButtonPosition = FabPosition.Center) { iv ->
+        }, floatingActionButtonPosition = FabPosition.Center
+    ) { iv ->
         Image(
             painterResource(R.drawable.home_screen),
             contentDescription = null,
             contentScale = ContentScale.FillHeight,
             modifier = Modifier.blur(4.dp)
         )
-        Column(modifier = Modifier.fillMaxSize().padding(iv)) {
+        Column(modifier = Modifier
+            .fillMaxSize()
+            .padding(iv)) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth(),
                 horizontalArrangement = Arrangement.Center
             ) {
-                Text("PetCare Tracker", fontSize = 24.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(12.dp))
+                Text(
+                    "PetCare Tracker",
+                    fontSize = 24.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    modifier = Modifier.padding(12.dp)
+                )
             }
-            Column(modifier = Modifier.fillMaxWidth().clip(
-                RoundedCornerShape(24.dp)
-            ).background(Color(0xffc7ebe6)).padding(8.dp)) {
-                Row(modifier = Modifier.fillMaxWidth().padding(8.dp), horizontalArrangement = androidx.compose.foundation.layout.Arrangement.SpaceBetween) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(
+                        RoundedCornerShape(24.dp)
+                    )
+                    .background(Color(0xffc7ebe6))
+                    .padding(8.dp)
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(8.dp),
+                    horizontalArrangement = androidx.compose.foundation.layout.Arrangement.SpaceBetween
+                ) {
                     Text("Random Pet Fact", fontWeight = FontWeight.SemiBold, fontSize = 18.sp)
-                    Icon(Icons.Default.Refresh, contentDescription = null, modifier = Modifier.clickable{
-                        scope.launch {
-                            viewModel.fetchFacts()
-                        }
-                    })
+                    Icon(
+                        Icons.Default.Refresh,
+                        contentDescription = null,
+                        modifier = Modifier.clickable {
+                            scope.launch {
+                                viewModel.fetchFacts()
+                            }
+                        })
                 }
-                Row(modifier = Modifier.fillMaxWidth().padding(8.dp)) {
+                Row(modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(8.dp)) {
                     Box(
-                        modifier = Modifier.size(50.dp).clip(RoundedCornerShape(12.dp)).background(Color(0xfffcb695))
-                    , contentAlignment = Alignment.Center) {
-                        Icon(painterResource(R.drawable.paw), contentDescription = null, tint = Color.DarkGray, modifier = Modifier.size(24.dp))
+                        modifier = Modifier
+                            .size(50.dp)
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(Color(0xfffcb695)), contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            painterResource(R.drawable.paw),
+                            contentDescription = null,
+                            tint = Color.DarkGray,
+                            modifier = Modifier.size(24.dp)
+                        )
                     }
                     Column(modifier = Modifier.padding(start = 8.dp)) {
-                        if(petFacts.data.isNotEmpty()) {
-                            Text(petFacts.data[0], fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
-                        }else{
+                        if (petFacts.data.isNotEmpty()) {
+                            Text(
+                                petFacts.data[0],
+                                fontWeight = FontWeight.SemiBold,
+                                fontSize = 14.sp
+                            )
+                        } else {
                             Text("Loading...")
                         }
                     }
@@ -196,14 +254,24 @@ fun HomeScreen(navController: NavHostController, viewModel: MainViewModel) {
                 }
             }
 
-            Text("My Pets", fontSize = 18.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(start = 12.dp, top = 12.dp))
+            Text(
+                "My Pets",
+                fontSize = 18.sp,
+                fontWeight = FontWeight.SemiBold,
+                modifier = Modifier.padding(start = 12.dp, top = 12.dp)
+            )
             LazyColumn(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(4.dp)
             ) {
-                items(petData) {
-                    PetCard(it)
+                items(petData) { pet ->
+                    PetCard(pet) {
+                        val gson = Gson()
+                        val petJson = gson.toJson(pet)
+                        val encodedJson = URLEncoder.encode(petJson, StandardCharsets.UTF_8.toString())
+                        navController.navigate(PetNavigation.DetailsScreen.createRoute(encodedJson))
+                    }
                 }
             }
         }
@@ -211,11 +279,16 @@ fun HomeScreen(navController: NavHostController, viewModel: MainViewModel) {
 }
 
 @Composable
-fun PetCard(data: PetData) {
+fun PetCard(data: PetData, onClick: () -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(8.dp).clip(RoundedCornerShape(24.dp)).background(Color(0xfffcb695)),
+            .padding(8.dp)
+            .clip(RoundedCornerShape(24.dp))
+            .background(Color(0xfffcb695))
+            .clickable{
+                onClick()
+            },
         horizontalArrangement = Arrangement.Start,
         verticalAlignment = Alignment.CenterVertically
     ) {
