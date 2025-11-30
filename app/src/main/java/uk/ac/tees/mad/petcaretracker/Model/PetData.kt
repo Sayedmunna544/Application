@@ -1,6 +1,7 @@
 package uk.ac.tees.mad.petcaretracker.Model
 
 data class PetData(
+    val documentID: String = "",
     val petName: String = "",
     val species: String = "",
     val breed: String = "",

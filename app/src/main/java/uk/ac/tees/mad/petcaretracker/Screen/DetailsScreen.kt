@@ -1,10 +1,14 @@
 package uk.ac.tees.mad.petcaretracker.Screen
 
+import android.util.Log
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.scrollable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
@@ -13,17 +17,33 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBarsPadding
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Done
 import androidx.compose.material.icons.rounded.ArrowBack
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -37,12 +57,19 @@ import java.io.File
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DetailsScreen(
     navController: NavHostController,
     viewModel: MainViewModel,
     petData: PetData?
 ) {
+    val scroll = rememberScrollState()
+    val context = LocalContext.current
+    val showAlertDialog = remember { mutableStateOf(false) }
+    var vaccineName by remember { mutableStateOf("")}
+    var vaccineDosage by remember { mutableStateOf("")}
+
     if (petData != null) {
         AsyncImage(
             File(petData.image.removePrefix("file://")),
@@ -52,21 +79,86 @@ fun DetailsScreen(
         )
         Column(modifier = Modifier.systemBarsPadding()) {
             Row(modifier = Modifier.fillMaxWidth().padding(4.dp), horizontalArrangement = Arrangement.SpaceBetween) {
-                Icon(Icons.Rounded.ArrowBack, contentDescription = null , tint = Color.White, modifier = Modifier.size(30.dp))
+                Icon(Icons.Rounded.ArrowBack, contentDescription = null , tint = Color.White, modifier = Modifier.size(30.dp).clickable{
+                    navController.popBackStack()
+                })
                 Text(petData.petName, color = Color.White, fontWeight = FontWeight.SemiBold, fontSize = 22.sp)
                 Icon(painterResource( R.drawable.paw), contentDescription = null, tint = Color.White, modifier = Modifier.size(30.dp))
             }
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.BottomCenter){
-                Column(modifier = Modifier.fillMaxWidth().defaultMinSize(minHeight = 510.dp).padding(16.dp).clip(RoundedCornerShape(24.dp)).background(Color.White)) {
-                    Column(modifier = Modifier.padding(16.dp)) {
-                        Text("Pet Details", fontWeight = FontWeight.SemiBold, fontSize = 18.sp, color = Color.Black)
+                Column(modifier = Modifier.fillMaxWidth().height( 510.dp).padding(16.dp).clip(RoundedCornerShape(24.dp)).shadow(elevation = 8.dp).background(Color.White)) {
+                    Column(modifier = Modifier.padding(16.dp).verticalScroll(scroll)) {
+                        Text("Pet Details", fontWeight = FontWeight.SemiBold, fontSize = 22.sp, color = Color.Black ,
+                            modifier = Modifier.padding(4.dp))
                         DetailsText("Species",petData.species)
                         DetailsText("Breed",petData.breed)
                         DetailsText("Date of Birth",petData.dateOfBirth)
                         DetailsText("Gender",petData.gender)
                         DetailsText("Weight",petData.weight+" kg")
                         DetailsText("Notes",petData.notes)
-                        DetailsText("Vaccinations",petData.vaccinations.joinToString(", "))
+                        Text("Vaccinations", fontWeight = FontWeight.SemiBold, color = Color.Black ,modifier = Modifier.padding(4.dp))
+                        petData.vaccinations.forEach {
+                            Row(modifier = Modifier.padding(4.dp), verticalAlignment = Alignment.CenterVertically) {
+                                Box(modifier = Modifier.size(30.dp).clip(CircleShape).background(Color.Green), contentAlignment = Alignment.Center) {
+                                    Icon(Icons.Default.Done, contentDescription = null, tint = Color.White)
+                                }
+                                Text(it, color = Color.Black, modifier = Modifier.padding(4.dp))
+                            }
+                        }
+                    }
+
+                }
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.BottomCenter) {
+                    Row() {
+                        Button(onClick = {
+                            showAlertDialog.value = true
+                        },modifier = Modifier.width(150.dp)) {
+                            Text("Add Vaccines")
+                        }
+                        Spacer(modifier = Modifier.width(40.dp))
+                        Button(onClick = {
+                            viewModel.deletePet(context,petData.documentID)
+                            navController.popBackStack()
+                        },modifier = Modifier.width(150.dp), colors = ButtonDefaults.buttonColors(Color.Red)) {
+                            Text("Delete")
+                        }
+                    }
+                }
+                if (showAlertDialog.value) {
+                    AlertDialog(onDismissRequest = { showAlertDialog.value = false }) {
+                        Column(
+                            modifier = Modifier.clip(
+                                RoundedCornerShape(24.dp)
+                            ).background(Color.White).padding(8.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Text("Vaccine Details", fontWeight = FontWeight.SemiBold, fontSize = 24.sp)
+                            OutlinedTextField(
+                                value = vaccineName,
+                                onValueChange = { vaccineName = it },
+                                modifier = Modifier.fillMaxWidth(),
+                                shape = RoundedCornerShape(24.dp),
+                                label = { Text("Vaccine Name") }
+                            )
+                            OutlinedTextField(
+                                value = vaccineDosage,
+                                onValueChange = { vaccineDosage = it },
+                                modifier = Modifier.fillMaxWidth(),
+                                shape = RoundedCornerShape(24.dp),
+                                label = { Text("Dosage") },
+                                trailingIcon = {
+                                    Text("ml")
+                                }
+                            )
+                            Button(onClick = {
+                                viewModel.addVaccine(context,petData.documentID,vaccineName, vaccineDosage)
+                                vaccineName = ""
+                                vaccineDosage = ""
+                                showAlertDialog.value = false
+                            }, shape = RoundedCornerShape(24.dp), modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)) {
+                                Text("Save")
+                            }
+                        }
                     }
                 }
             }

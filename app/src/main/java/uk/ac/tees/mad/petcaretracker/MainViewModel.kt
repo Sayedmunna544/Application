@@ -10,6 +10,7 @@ import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
@@ -131,6 +132,7 @@ class MainViewModel @Inject constructor(
             if(uri != null){
                 firestore.collection("users").document(auth.currentUser!!.uid).collection("user_pets").add(
                     hashMapOf(
+                        "documentID" to null,
                         "petName" to petName,
                         "species" to species,
                         "breed" to breed,
@@ -142,9 +144,14 @@ class MainViewModel @Inject constructor(
                         "image" to uri.toString()
                     )
                 ).addOnSuccessListener {
+                    it.update("documentID", it.id).addOnSuccessListener {
                     Toast.makeText(context, "Pet added successfully", Toast.LENGTH_SHORT).show()
                     loading.value = false
                     fetchPetData()
+                    }.addOnFailureListener {
+                        Toast.makeText(context, it.localizedMessage, Toast.LENGTH_SHORT).show()
+                        loading.value = false
+                    }
                 }.addOnFailureListener {
                     Toast.makeText(context, it.localizedMessage, Toast.LENGTH_SHORT).show()
                     loading.value = false
@@ -165,6 +172,25 @@ class MainViewModel @Inject constructor(
         }
     }
 
+    fun addVaccine(context: Context,documentId: String, vaccine: String, dosage: String){
+        firestore.collection("users").document(auth.currentUser!!.uid).collection("user_pets").document(documentId).update(
+            "vaccinations", FieldValue.arrayUnion(vaccine + " - " + dosage)
+        ).addOnSuccessListener {
+            Toast.makeText(context, "Vaccine added successfully", Toast.LENGTH_SHORT).show()
+            fetchPetData()
+        }.addOnFailureListener {
+            Toast.makeText(context, it.localizedMessage, Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    fun deletePet(context: Context, documentId: String){
+        firestore.collection("users").document(auth.currentUser!!.uid).collection("user_pets").document(documentId).delete().addOnSuccessListener {
+            Toast.makeText(context, "Pet deleted successfully", Toast.LENGTH_SHORT).show()
+            fetchPetData()
+        }.addOnFailureListener {
+            Toast.makeText(context, it.localizedMessage, Toast.LENGTH_SHORT).show()
+        }
+    }
     suspend fun fetchFacts(){
         val response = petApi.getFacts()
         facts.value = response

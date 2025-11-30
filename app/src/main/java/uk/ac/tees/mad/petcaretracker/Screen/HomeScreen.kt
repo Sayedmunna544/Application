@@ -1,6 +1,9 @@
 package uk.ac.tees.mad.petcaretracker.Screen
 
 import android.Manifest
+import android.app.AlarmManager
+import android.content.Context
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -58,9 +61,12 @@ import uk.ac.tees.mad.petcaretracker.MainViewModel
 import uk.ac.tees.mad.petcaretracker.Model.PetData
 import uk.ac.tees.mad.petcaretracker.PetNavigation
 import uk.ac.tees.mad.petcaretracker.R
+import uk.ac.tees.mad.petcaretracker.utils.scheduleDailyNotification
 import java.io.File
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
+import android.provider.Settings
+import android.net.Uri
 
 @Composable
 fun HomeScreen(navController: NavHostController, viewModel: MainViewModel) {
@@ -114,9 +120,11 @@ fun HomeScreen(navController: NavHostController, viewModel: MainViewModel) {
                     ) == PackageManager.PERMISSION_GRANTED
         }
 
-        notificationPermissionGranted = ContextCompat.checkSelfPermission(
-            context, Manifest.permission.ACCESS_NOTIFICATION_POLICY
-        ) == PackageManager.PERMISSION_GRANTED
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            notificationPermissionGranted = ContextCompat.checkSelfPermission(
+                context, Manifest.permission.POST_NOTIFICATIONS
+            ) == PackageManager.PERMISSION_GRANTED
+        }
     }
 
     fun requestPermissions() {
@@ -133,13 +141,30 @@ fun HomeScreen(navController: NavHostController, viewModel: MainViewModel) {
             )
         }
 
-        notificationPermissionLauncher.launch(Manifest.permission.ACCESS_NOTIFICATION_POLICY)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && !notificationPermissionGranted) {
+            notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+        }
     }
 
     LaunchedEffect(Unit) {
         checkPermissions()
-        if (!cameraPermissionGranted || !storagePermissionGranted || !notificationPermissionGranted) {
+        if (!cameraPermissionGranted || !storagePermissionGranted || (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && !notificationPermissionGranted)) {
             requestPermissions()
+        }
+    }
+
+    LaunchedEffect(notificationPermissionGranted) {
+        if (notificationPermissionGranted) {
+            val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && !alarmManager.canScheduleExactAlarms()) {
+                // Prompt user to enable exact alarms
+                val intent = Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM).apply {
+                    data = Uri.fromParts("package", context.packageName, null)
+                }
+                context.startActivity(intent)
+            } else {
+                scheduleDailyNotification(context, hour = 18, minute = 11)
+            }
         }
     }
 
@@ -211,7 +236,7 @@ fun HomeScreen(navController: NavHostController, viewModel: MainViewModel) {
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(8.dp),
-                    horizontalArrangement = androidx.compose.foundation.layout.Arrangement.SpaceBetween
+                    horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Text("Random Pet Fact", fontWeight = FontWeight.SemiBold, fontSize = 18.sp)
                     Icon(
