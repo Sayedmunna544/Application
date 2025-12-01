@@ -5,6 +5,7 @@ import android.graphics.Bitmap
 import android.net.Uri
 import android.util.Log
 import android.widget.Toast
+import androidx.compose.material3.Switch
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.lifecycle.ViewModel
@@ -19,6 +20,7 @@ import uk.ac.tees.mad.petcaretracker.Data.PetApi
 import uk.ac.tees.mad.petcaretracker.Model.PetData
 import java.io.File
 import javax.inject.Inject
+import kotlin.random.Random
 
 @HiltViewModel
 class MainViewModel @Inject constructor(
@@ -29,7 +31,7 @@ class MainViewModel @Inject constructor(
 
     val _isLoggedIn = mutableStateOf(false)
     val petData = mutableStateOf<List<PetData>>(listOf());
-    val facts = mutableStateOf(MeowResponse(listOf()))
+    val facts = mutableStateOf(MeowResponse("", ""))
 
     init {
         if (auth.currentUser != null) {
@@ -122,7 +124,8 @@ class MainViewModel @Inject constructor(
         gender: String,
         weight: String,
         notes: String,
-        vaccinations: SnapshotStateList<String>
+        vaccinations: SnapshotStateList<String>,
+        onSuccess: () -> Unit
     ){
         viewModelScope.launch {
             loading.value = true
@@ -148,6 +151,7 @@ class MainViewModel @Inject constructor(
                     Toast.makeText(context, "Pet added successfully", Toast.LENGTH_SHORT).show()
                     loading.value = false
                     fetchPetData()
+                        onSuccess()
                     }.addOnFailureListener {
                         Toast.makeText(context, it.localizedMessage, Toast.LENGTH_SHORT).show()
                         loading.value = false
@@ -192,7 +196,11 @@ class MainViewModel @Inject constructor(
         }
     }
     suspend fun fetchFacts(){
-        val response = petApi.getFacts()
-        facts.value = response
+        val animalGuess = Random.nextInt(1,3)
+        when(animalGuess){
+            1 -> facts.value = petApi.getFacts("cat")
+            2 -> facts.value = petApi.getFacts("dog")
+            3 -> facts.value = petApi.getFacts("bird")
+        }
     }
 }

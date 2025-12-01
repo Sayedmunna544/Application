@@ -1,4 +1,3 @@
-// Updated file: uk/ac/tees/mad/petcaretracker/utils/NotificationUtils.kt
 
 package uk.ac.tees.mad.petcaretracker.utils
 
@@ -9,7 +8,6 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.os.Build
-import uk.ac.tees.mad.petcaretracker.utils.AlarmReceiver
 import java.util.Calendar
 
 const val CHANNEL_ID = "daily_reminder_channel"
@@ -29,14 +27,16 @@ fun createNotificationChannel(context: Context) {
     }
 }
 
-fun scheduleDailyNotification(context: Context, hour: Int, minute: Int) {
+fun scheduleDailyNotification(context: Context, hour: Int, minute: Int, message: String, requestCode: Int) {
     createNotificationChannel(context)
 
     val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
-    val intent = Intent(context, AlarmReceiver::class.java)
+    val intent = Intent(context, AlarmReceiver::class.java).apply {
+        putExtra("NOTIFICATION_MESSAGE", message)
+    }
     val pendingIntent = PendingIntent.getBroadcast(
         context,
-        0,
+        requestCode,
         intent,
         PendingIntent.FLAG_UPDATE_CURRENT or if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) PendingIntent.FLAG_IMMUTABLE else 0
     )
@@ -60,8 +60,6 @@ fun scheduleDailyNotification(context: Context, hour: Int, minute: Int) {
                 pendingIntent
             )
         } else {
-            // Fallback to inexact alarm if exact alarms are not allowed
-            // Alternatively, you can prompt the user to grant the permission in settings
             alarmManager.setInexactRepeating(
                 AlarmManager.RTC_WAKEUP,
                 calendar.timeInMillis,

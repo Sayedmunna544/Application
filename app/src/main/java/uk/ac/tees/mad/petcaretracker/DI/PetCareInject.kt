@@ -24,7 +24,7 @@ object PetCareInject {
     fun provideFirestore(): FirebaseFirestore = FirebaseFirestore.getInstance()
 
     @Provides
-    fun provideBaseUrl() = "https://meowfacts.herokuapp.com"
+    fun provideBaseUrl() = "https://api.some-random-api.com/"
 
     @Provides
     @Singleton

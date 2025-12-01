@@ -57,9 +57,9 @@ fun AppNavigation(innerPadding: PaddingValues) {
     val viewModel : MainViewModel = hiltViewModel();
     val navController = rememberNavController()
 
-    NavHost(navController = navController, startDestination = PetNavigation.LoginScreen.route){
+    NavHost(navController = navController, startDestination = PetNavigation.SplashScreen.route){
         composable(PetNavigation.SplashScreen.route){
-            SplashScreen(navController, innerPadding)
+            SplashScreen(navController, innerPadding, viewModel)
         }
         composable(PetNavigation.RegisterScreen.route){
             RegisterScreen(navController, viewModel)

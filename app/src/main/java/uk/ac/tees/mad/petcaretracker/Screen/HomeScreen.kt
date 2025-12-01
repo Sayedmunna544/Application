@@ -1,6 +1,7 @@
 package uk.ac.tees.mad.petcaretracker.Screen
 
 import android.Manifest
+import android.app.Activity
 import android.app.AlarmManager
 import android.content.Context
 import android.content.Intent
@@ -67,6 +68,9 @@ import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
 import android.provider.Settings
 import android.net.Uri
+import android.util.Log
+import androidx.compose.runtime.saveable.rememberSaveable
+import kotlinx.coroutines.delay
 
 @Composable
 fun HomeScreen(navController: NavHostController, viewModel: MainViewModel) {
@@ -74,81 +78,64 @@ fun HomeScreen(navController: NavHostController, viewModel: MainViewModel) {
     val petData = viewModel.petData.value
     val petFacts = viewModel.facts.value
     val scope = rememberCoroutineScope()
-    var cameraPermissionGranted by remember { mutableStateOf(false) }
-    var storagePermissionGranted by remember { mutableStateOf(false) }
-    var notificationPermissionGranted by remember { mutableStateOf(false) }
+    var cameraPermissionGranted by rememberSaveable { mutableStateOf(false) }
+    var storagePermissionGranted by rememberSaveable { mutableStateOf(false) }
+    var notificationPermissionGranted by rememberSaveable { mutableStateOf(false) }
+    var exactAlarmGranted by rememberSaveable { mutableStateOf(false) }
 
-    val cameraPermissionLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.RequestPermission(),
-        onResult = { isGranted ->
-            cameraPermissionGranted = isGranted
-        }
-    )
-
-    val storagePermissionLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.RequestMultiplePermissions()
+    val permissionsLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestMultiplePermissions()
     ) { permissions ->
+        cameraPermissionGranted = permissions[Manifest.permission.CAMERA] == true
         storagePermissionGranted = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             permissions[Manifest.permission.READ_MEDIA_IMAGES] == true
         } else {
-            permissions[Manifest.permission.READ_EXTERNAL_STORAGE] == true &&
-                    permissions[Manifest.permission.WRITE_EXTERNAL_STORAGE] == true
+            permissions[Manifest.permission.READ_EXTERNAL_STORAGE] == true
         }
-    }
-
-    val notificationPermissionLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.RequestPermission()
-    ) { isGranted ->
-        notificationPermissionGranted = isGranted
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            notificationPermissionGranted = permissions[Manifest.permission.POST_NOTIFICATIONS] == true
+        } else {
+            notificationPermissionGranted = true
+        }
     }
 
     fun checkPermissions() {
-        cameraPermissionGranted = ContextCompat.checkSelfPermission(
-            context, Manifest.permission.CAMERA
-        ) == PackageManager.PERMISSION_GRANTED
+        cameraPermissionGranted =
+            ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED
 
         storagePermissionGranted = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            ContextCompat.checkSelfPermission(
-                context, Manifest.permission.READ_MEDIA_IMAGES
-            ) == PackageManager.PERMISSION_GRANTED
+            ContextCompat.checkSelfPermission(context, Manifest.permission.READ_MEDIA_IMAGES) == PackageManager.PERMISSION_GRANTED
         } else {
-            ContextCompat.checkSelfPermission(
-                context, Manifest.permission.READ_EXTERNAL_STORAGE
-            ) == PackageManager.PERMISSION_GRANTED &&
-                    ContextCompat.checkSelfPermission(
-                        context, Manifest.permission.WRITE_EXTERNAL_STORAGE
-                    ) == PackageManager.PERMISSION_GRANTED
+            ContextCompat.checkSelfPermission(context, Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED
         }
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            notificationPermissionGranted = ContextCompat.checkSelfPermission(
-                context, Manifest.permission.POST_NOTIFICATIONS
-            ) == PackageManager.PERMISSION_GRANTED
-        }
+        notificationPermissionGranted = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED
+        } else true
     }
 
     fun requestPermissions() {
-        cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
-
+        val permissionsToRequest = mutableListOf(Manifest.permission.CAMERA)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            storagePermissionLauncher.launch(arrayOf(Manifest.permission.READ_MEDIA_IMAGES))
+            permissionsToRequest.add(Manifest.permission.READ_MEDIA_IMAGES)
+            permissionsToRequest.add(Manifest.permission.POST_NOTIFICATIONS)
         } else {
-            storagePermissionLauncher.launch(
-                arrayOf(
-                    Manifest.permission.READ_EXTERNAL_STORAGE,
-                    Manifest.permission.WRITE_EXTERNAL_STORAGE
-                )
-            )
+            permissionsToRequest.add(Manifest.permission.READ_EXTERNAL_STORAGE)
         }
+        permissionsLauncher.launch(permissionsToRequest.toTypedArray())
+    }
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && !notificationPermissionGranted) {
-            notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+    LaunchedEffect(Unit) {
+        checkPermissions()
+        if (!cameraPermissionGranted || !storagePermissionGranted || !notificationPermissionGranted) {
+            requestPermissions()
         }
     }
 
     LaunchedEffect(Unit) {
         checkPermissions()
-        if (!cameraPermissionGranted || !storagePermissionGranted || (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && !notificationPermissionGranted)) {
+        if (!cameraPermissionGranted || !storagePermissionGranted || !notificationPermissionGranted) {
+            delay(1000)
             requestPermissions()
         }
     }
@@ -157,13 +144,22 @@ fun HomeScreen(navController: NavHostController, viewModel: MainViewModel) {
         if (notificationPermissionGranted) {
             val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && !alarmManager.canScheduleExactAlarms()) {
-                // Prompt user to enable exact alarms
-                val intent = Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM).apply {
-                    data = Uri.fromParts("package", context.packageName, null)
-                }
-                context.startActivity(intent)
+                (context as? Activity)?.startActivity(
+                    Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM).apply {
+                        data = Uri.fromParts("package", context.packageName, null)
+                    }
+                )
             } else {
-                scheduleDailyNotification(context, hour = 18, minute = 11)
+                val notificationTimes = listOf(
+                    Triple(9, 0, "Good morning! Time for your pet’s breakfast 🐾"),
+                    Triple(10, 30, "Walk time! Take your pet out for fresh air 🚶‍♂️"),
+                    Triple(18, 0, "Dinner time! Don’t forget to feed your buddy 🍲"),
+                    Triple(21, 0, "Evening cuddle reminder 💕 Spend some time together")
+                )
+
+                notificationTimes.forEachIndexed { index, (hour, minute, message) ->
+                    scheduleDailyNotification(context, hour, minute, message, index)
+                }
             }
         }
     }
@@ -265,9 +261,9 @@ fun HomeScreen(navController: NavHostController, viewModel: MainViewModel) {
                         )
                     }
                     Column(modifier = Modifier.padding(start = 8.dp)) {
-                        if (petFacts.data.isNotEmpty()) {
+                        if (petFacts.fact.isNotEmpty()) {
                             Text(
-                                petFacts.data[0],
+                                petFacts.fact,
                                 fontWeight = FontWeight.SemiBold,
                                 fontSize = 14.sp
                             )

@@ -62,6 +62,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import uk.ac.tees.mad.petcaretracker.MainViewModel
+import uk.ac.tees.mad.petcaretracker.PetNavigation
 import uk.ac.tees.mad.petcaretracker.R
 import java.io.InputStream
 import java.text.SimpleDateFormat
@@ -407,7 +408,11 @@ fun CreateScreen(navController: NavHostController, viewModel: MainViewModel) {
             }
             Button(onClick = {
                 if (imageBitmap.value != null && petName.isNotEmpty() && species.isNotEmpty() && breed.isNotEmpty() && dateOfBirth.isNotEmpty() && gender.isNotEmpty() && weight.isNotEmpty() && notes.isNotEmpty()) {
-                    viewModel.savePetData(context, imageBitmap.value!!, petName, species, breed, dateOfBirth, gender, weight, notes, vaccinations)
+                    viewModel.savePetData(context, imageBitmap.value!!, petName, species, breed, dateOfBirth, gender, weight, notes, vaccinations, onSuccess = {
+                        navController.navigate(PetNavigation.HomeScreen.route){
+                            popUpTo(0)
+                        }
+                    })
                 }else{
                     Toast.makeText(context, "Please fill all the fields", Toast.LENGTH_SHORT).show()
                 }

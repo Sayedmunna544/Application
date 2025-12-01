@@ -1,12 +1,14 @@
 package uk.ac.tees.mad.petcaretracker.Data
 
 import retrofit2.http.GET
+import retrofit2.http.Path
 
 interface PetApi {
-    @GET("/")
-    suspend fun getFacts(): MeowResponse
+    @GET("/animal/{type}")
+    suspend fun getFacts(@Path("type") type: String): MeowResponse
 }
 
 data class MeowResponse(
-    val data: List<String>
+    val image: String,
+    val fact: String
 )
