@@ -5,7 +5,6 @@ import android.graphics.Bitmap
 import android.net.Uri
 import android.util.Log
 import android.widget.Toast
-import androidx.compose.material3.Switch
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.lifecycle.ViewModel
@@ -17,6 +16,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
 import uk.ac.tees.mad.petcaretracker.Data.MeowResponse
 import uk.ac.tees.mad.petcaretracker.Data.PetApi
+import uk.ac.tees.mad.petcaretracker.Data.User
 import uk.ac.tees.mad.petcaretracker.Model.PetData
 import java.io.File
 import javax.inject.Inject
@@ -32,11 +32,13 @@ class MainViewModel @Inject constructor(
     val _isLoggedIn = mutableStateOf(false)
     val petData = mutableStateOf<List<PetData>>(listOf());
     val facts = mutableStateOf(MeowResponse("", ""))
+    val userData = mutableStateOf<User>(User())
 
     init {
         if (auth.currentUser != null) {
             _isLoggedIn.value = true
             fetchPetData()
+            fetchUser()
         }
     }
 
@@ -77,6 +79,77 @@ class MainViewModel @Inject constructor(
                     Toast.makeText(context, it.localizedMessage, Toast.LENGTH_SHORT).show()
                 }
         }
+    }
+
+    fun fetchUser() {
+        val uid = auth.currentUser?.uid
+        if (uid != null) {
+            firestore.collection("users")
+                .document(uid)
+                .collection("user_details")
+                .get()
+                .addOnSuccessListener { querySnapshot ->
+                    if (!querySnapshot.isEmpty) {
+                        val document = querySnapshot.documents.first()
+                        val user = document.toObject(User::class.java)
+                        if (user != null) {
+                            userData.value = user
+                            Log.d("User_Data", userData.value.toString())
+                        }
+                    } else {
+                        Log.d("User_Data", "No documents found in user_details")
+                    }
+                }
+                .addOnFailureListener { exception ->
+                    Log.d("error", "Error fetching user: ${exception.localizedMessage}")
+                }
+        } else {
+            Log.d("error", "User ID is null")
+        }
+    }
+
+    fun updateUserData(context: Context,userNamer: String){
+        userData.value.fullName = userNamer
+        firestore.collection("users").document(auth.currentUser!!.uid).collection("user_details").get().addOnSuccessListener {
+            queryDocumentSnapshots ->
+            queryDocumentSnapshots.documents.first().reference.update(
+                "fullName", userNamer
+            ).addOnSuccessListener {
+                Toast.makeText(context, "User name updated successfully", Toast.LENGTH_SHORT).show()
+            }.addOnFailureListener {
+                Toast.makeText(context, it.localizedMessage, Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
+    fun logOut() {
+        auth.signOut()
+        _isLoggedIn.value = false
+    }
+
+    fun updatePet(
+        context: Context,
+        documentID: String,
+        petName: String,
+        petBreed: String,
+        petSpecies: String,
+        petWeight: String,
+        petNotes: String
+    ) {
+        firestore.collection("users").document(auth.currentUser!!.uid).collection("user_pets").document(documentID)
+            .update( hashMapOf(
+                "petName" to petName,
+                "breed" to petBreed,
+                "species" to petSpecies,
+                "weight" to petWeight,
+                "notes" to petNotes
+            ) as Map<String, Any>
+            ).addOnSuccessListener {
+                Toast.makeText(context, "Pet updated successfully", Toast.LENGTH_SHORT).show()
+                fetchPetData()
+            }.addOnFailureListener {
+                Toast.makeText(context, it.localizedMessage, Toast.LENGTH_SHORT).show()
+            }
     }
 
     fun logIn(email: String, password: String, context: Context) {
