@@ -3,12 +3,14 @@ package uk.ac.tees.mad.petcaretracker.Screen
 import android.Manifest
 import android.app.Activity
 import android.app.AlarmManager
+import android.app.AlertDialog
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
 import android.provider.Settings
+import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
@@ -44,8 +46,10 @@ import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.material.icons.rounded.EditOff
 import androidx.compose.material.icons.rounded.Menu
+import androidx.compose.material.icons.rounded.Notifications
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FabPosition
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
@@ -66,10 +70,12 @@ import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
@@ -87,11 +93,19 @@ import java.io.File
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(navController: NavHostController, viewModel: MainViewModel) {
     val context = LocalContext.current
     val user = viewModel.userData.value
-    var userName by remember { mutableStateOf(user.fullName) }
+    var userName by remember { mutableStateOf("") }
+
+    LaunchedEffect(user) {
+        userName = user.fullName
+    }
+    var isNotificationVisible by remember {
+        mutableStateOf(false)
+    }
     val petData = viewModel.petData.value
     val petFacts = viewModel.facts.value
     val scope = rememberCoroutineScope()
@@ -194,6 +208,7 @@ fun HomeScreen(navController: NavHostController, viewModel: MainViewModel) {
             }
         }
     }
+    Log.d("FullName", userName)
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
@@ -266,7 +281,19 @@ fun HomeScreen(navController: NavHostController, viewModel: MainViewModel) {
                             modifier = Modifier.padding(12.dp)
                         )
                     }
+                    Icon(
+                        Icons.Rounded.Notifications,
+                        contentDescription = null,
+                        modifier = Modifier
+                            .size(30.dp)
+                            .clickable {
+                                isNotificationVisible = true
+                            }
+                            .align(Alignment.CenterEnd)
+                    )
+
                 }
+
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -357,6 +384,40 @@ fun HomeScreen(navController: NavHostController, viewModel: MainViewModel) {
                 }
 
             }
+            if (isNotificationVisible) {
+                androidx.compose.material3.AlertDialog(onDismissRequest = {
+                    isNotificationVisible = false
+                }) {
+                    Column(modifier = Modifier
+
+                        .clip(RoundedCornerShape(24.dp))
+
+                        .background(Color.White)
+                        .padding(8.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                         verticalArrangement = Arrangement.Center) {
+                        Text("Notifications", fontWeight = FontWeight.SemiBold, fontSize = 24.sp)
+                        Spacer(modifier = Modifier.height(12.dp))
+                        data class notification(
+                            val time : String,
+                            val message : String
+                        )
+                        val notificationTimes = listOf(
+                            notification("9:00", "Good morning! Time for your pet’s breakfast 🐾"),
+                            notification("10:30", "Walk time! Take your pet out for fresh air 🚶‍♂️"),
+                            notification("18:00", "Dinner time! Don’t forget to feed your buddy 🍲"),
+                            notification("21:00", "Evening cuddle reminder 💕 Spend some time together")
+                        )
+                        notificationTimes.forEachIndexed { index, (hour, message) ->
+                            Row(modifier = Modifier.padding(8.dp)) {
+                                Text("$hour", fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(end = 4.dp))
+                                Text(message)
+                            }
+                        }
+                    }
+
+                }
+            }
             if (sideBarVisible.value) {
                 Box(
                     modifier = Modifier
@@ -426,17 +487,31 @@ fun HomeScreen(navController: NavHostController, viewModel: MainViewModel) {
                                 readOnly = true,
                                 shape = RoundedCornerShape(24.dp)
                             )
-                            Button(onClick = {
-                                viewModel.updateUserData(context,userName)
-                            }, modifier = Modifier.fillMaxWidth().padding(8.dp), colors = ButtonDefaults.buttonColors( Color(0xff617cf2)),
-                                shape = RoundedCornerShape(13.dp)) {
+                            Button(
+                                onClick = {
+                                    viewModel.updateUserData(context, userName)
+                                },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(8.dp),
+                                colors = ButtonDefaults.buttonColors(Color(0xff617cf2)),
+                                shape = RoundedCornerShape(13.dp)
+                            ) {
                                 Text("Save")
                             }
-                            Button(onClick = {viewModel.logOut()
-                                             navController.navigate(PetNavigation.LoginScreen.route){
-                                                 popUpTo(0)
-                                             }}, modifier = Modifier.fillMaxWidth().padding(8.dp), colors = ButtonDefaults.buttonColors( Color.Red.copy(alpha = 0.7f)),
-                                shape = RoundedCornerShape(13.dp)) {
+                            Button(
+                                onClick = {
+                                    viewModel.logOut()
+                                    navController.navigate(PetNavigation.LoginScreen.route) {
+                                        popUpTo(0)
+                                    }
+                                },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(8.dp),
+                                colors = ButtonDefaults.buttonColors(Color.Red.copy(alpha = 0.7f)),
+                                shape = RoundedCornerShape(13.dp)
+                            ) {
                                 Text("Logout")
                             }
                         }
@@ -489,6 +564,44 @@ fun PetCard(data: PetData, onClick: () -> Unit) {
             ) {
                 Text(text = data.breed)
                 Text(text = data.dateOfBirth)
+            }
+        }
+    }
+}
+
+@Preview(showBackground = true, name = "Home Screen")
+@Composable
+fun HomeScreenPreview() {
+    Scaffold(
+        modifier = Modifier.fillMaxSize(),
+        floatingActionButton = {
+            FloatingActionButton(onClick = {}) {
+                Icon(Icons.Default.Add, contentDescription = "Add")
+            }
+        }
+    ) { paddingValues ->
+        Image(
+            painter = painterResource(id = R.drawable.home_screen),
+            contentDescription = null,
+            contentScale = ContentScale.FillHeight,
+            modifier = Modifier
+                .fillMaxSize()
+                .blur(4.dp)
+        )
+
+        Column(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .shadow(4.dp, RectangleShape, clip = false)
+                    .background(Color.White.copy(alpha = 0.85f))
+                    .padding(16.dp)
+            ) {
+                Text(
+                    text = "PetCare Tracker",
+                    fontSize = 24.sp,
+                    fontWeight = FontWeight.SemiBold
+                )
             }
         }
     }

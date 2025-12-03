@@ -68,6 +68,7 @@ class MainViewModel @Inject constructor(
                             Toast.makeText(context, "Sign up successful", Toast.LENGTH_SHORT).show()
                             _isLoggedIn.value = true
                             fetchPetData()
+                            fetchUser()
                         }.addOnFailureListener {
                             loading.value = false
                             Toast.makeText(context, it.localizedMessage, Toast.LENGTH_SHORT).show()
@@ -116,6 +117,7 @@ class MainViewModel @Inject constructor(
                 "fullName", userNamer
             ).addOnSuccessListener {
                 Toast.makeText(context, "User name updated successfully", Toast.LENGTH_SHORT).show()
+                fetchUser()
             }.addOnFailureListener {
                 Toast.makeText(context, it.localizedMessage, Toast.LENGTH_SHORT).show()
             }
@@ -134,7 +136,8 @@ class MainViewModel @Inject constructor(
         petBreed: String,
         petSpecies: String,
         petWeight: String,
-        petNotes: String
+        petNotes: String,
+        onSuccess: () -> Unit
     ) {
         firestore.collection("users").document(auth.currentUser!!.uid).collection("user_pets").document(documentID)
             .update( hashMapOf(
@@ -147,6 +150,7 @@ class MainViewModel @Inject constructor(
             ).addOnSuccessListener {
                 Toast.makeText(context, "Pet updated successfully", Toast.LENGTH_SHORT).show()
                 fetchPetData()
+                onSuccess()
             }.addOnFailureListener {
                 Toast.makeText(context, it.localizedMessage, Toast.LENGTH_SHORT).show()
             }
@@ -163,6 +167,7 @@ class MainViewModel @Inject constructor(
                         _isLoggedIn.value = true
                         Toast.makeText(context, "Log in successful", Toast.LENGTH_SHORT).show()
                         fetchPetData()
+                        fetchUser()
                     }
                 }
                 .addOnFailureListener {
@@ -249,12 +254,14 @@ class MainViewModel @Inject constructor(
         }
     }
 
-    fun addVaccine(context: Context,documentId: String, vaccine: String, dosage: String){
+    fun addVaccine(context: Context,documentId: String, vaccine: String, dosage: String, onSuccess: () -> Unit){
         firestore.collection("users").document(auth.currentUser!!.uid).collection("user_pets").document(documentId).update(
             "vaccinations", FieldValue.arrayUnion(vaccine + " - " + dosage)
         ).addOnSuccessListener {
             Toast.makeText(context, "Vaccine added successfully", Toast.LENGTH_SHORT).show()
+            onSuccess()
             fetchPetData()
+
         }.addOnFailureListener {
             Toast.makeText(context, it.localizedMessage, Toast.LENGTH_SHORT).show()
         }

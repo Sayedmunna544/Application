@@ -15,6 +15,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import kotlinx.coroutines.delay
@@ -48,6 +49,24 @@ fun SplashScreen(navController: NavHostController, innerPadding: PaddingValues, 
                 .border(2.dp, color = Color.Black, shape = RoundedCornerShape(42.dp))
 
 
+        )
+    }
+}
+
+
+
+@Preview(showBackground = true, name = "Splash Screen")
+@Composable
+fun SplashScreenPreview() {
+    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+        Image(
+            painter = painterResource(id = R.drawable.app_icon),
+            contentDescription = null,
+            modifier = Modifier
+                .shadow(elevation = 24.dp, shape = RoundedCornerShape(42.dp))
+                .size(184.dp)
+                .clip(RoundedCornerShape(42.dp))
+                .border(2.dp, color = Color.Black, shape = RoundedCornerShape(42.dp))
         )
     }
 }
